@@ -1,14 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import glob
 import argparse
+import glob
 import os
 import sys
 
-from pyment import PyComment
-from pyment import __version__, __copyright__, __author__, __licence__
-
+from pyment import PyComment, __author__, __copyright__, __licence__, __version__
 
 MAX_DEPTH_RECUR = 50
 ''' The maximum depth to reach while recursively exploring sub folders'''
@@ -129,7 +127,7 @@ def main():
                         help='python file or folder containing python files to proceed (explore also sub-folders). Use "-" to read from stdin and write to stdout')
     parser.add_argument('-i', '--input', metavar='style', default='auto',
                         dest='input', help='Input docstring style in ["javadoc", "reST", "numpydoc", "google", "auto"] (default autodetected)')
-    parser.add_argument('-o', '--output', metavar='style', default="reST",
+    parser.add_argument('-o', '--output', metavar='style', default="numpydoc",
                         dest='output', help='Output docstring style in ["javadoc", "reST", "numpydoc", "google"] (default "reST")')
     parser.add_argument('-q', '--quotes', metavar='quotes', default='"""',
                         dest='quotes', help='Type of docstring delimiter quotes: \'\'\' or \"\"\" (default \"\"\"). Note that you may escape the characters using \\ like \\\'\\\'\\\', or surround it with the opposite quotes like \"\'\'\'\"')
