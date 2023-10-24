@@ -90,13 +90,10 @@ You can contact the developer *dadel* by opening a `discussion <https://github.c
 
 Start quickly
 -------------
-- install from Pypi
 
-.. code-block:: sh
+**Note**: you are going to install and use a non-official fork of Pyment.
 
-        $ pip install pyment
-
-- install from sources:
+- install this fork from sources:
 
 .. code-block:: sh
 
