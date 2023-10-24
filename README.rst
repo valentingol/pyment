@@ -3,6 +3,20 @@ pyment
 
 Create, update or convert docstrings in existing Python files, managing several styles.
 
+**Discalimer**: This is a non-official fork of the original project. Main changes are:
+- Output style by default is numpydoc instead of reST
+- The empty sections in original docstring (including parameters) are ignored by default
+  To enable them, use `-e` flag (note that the behavior of this flag in the original
+  project is the opposite)
+- Most sentences are now ended with a dot and start with a capital letter
+- Default arguments are automatically specified in the docstring using the `By default, `
+  syntax and `, optional` is added next to the type of optional arguments.
+- Indentation of indented doctests lines are preserved.
+- More sections title are supported (like Note, Example, ...)
+
+See `output_numpy.py <output_numpy.py>`_ and `output_google.py <output_google.py>`_
+for an example of the results from `example.py <example.py>`_.
+
 .. contents:: :local:
 
 Project Status
@@ -17,7 +31,7 @@ Windows: |appveyor|
 
 .. |travis| image:: https://travis-ci.org/dadadel/pyment.svg?branch=master
     :target: https://travis-ci.org/dadadel/pyment.svg?branch=master
-    :alt: Linux tests (TravisCI)                                   
+    :alt: Linux tests (TravisCI)
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/f9d4jps5fkf4m42h?svg=true
     :target: https://ci.appveyor.com/api/projects/status/f9d4jps5fkf4m42h?svg=true
@@ -25,10 +39,10 @@ Windows: |appveyor|
 
 |
 
-**Supported Versions**  
+**Supported Versions**
 
 .. image:: https://img.shields.io/badge/python-3.6-blue.svg
-    :target: https://img.shields.io/badge/python-3.6-blue.svg  
+    :target: https://img.shields.io/badge/python-3.6-blue.svg
     :alt: Supports Python36
 .. image:: https://img.shields.io/badge/python-3.7-blue.svg
     :target: https://img.shields.io/badge/python-3.7-blue.svg
@@ -60,7 +74,7 @@ It will parse one or several python scripts and retrieve existing docstrings.
 Then, for all found functions/methods/classes, it will generate formatted docstrings with parameters, default values,...
 
 At the end, patches can be generated for each file. Then, man can apply the patches to the initial scripts.
-It is also possible to update the files directly without generating patches, or to output on *stdout*. 
+It is also possible to update the files directly without generating patches, or to output on *stdout*.
 It is also possible to generate the python file with the new docstrings, or to retrieve only the docstrings...
 
 Currently, the managed styles in input/output are javadoc, one variant of reST (re-Structured Text, used by Sphinx), numpydoc, google docstrings, groups (other grouped style).
@@ -86,9 +100,9 @@ Start quickly
 
 .. code-block:: sh
 
-        $ pip install git+https://github.com/dadadel/pyment.git
+        $ pip install git+https://github.com/valentingol/pyment
         or
-        $ git clone https://github.com/dadadel/pyment.git
+        $ git clone https://github.com/valentingol/pyment.git
         $ cd pyment
         $ python setup.py install
 
@@ -96,14 +110,15 @@ Start quickly
 
 .. code-block:: sh
 
-        $ pyment  myfile.py    # will generate a patch
+        $ pyment myfile.py    # will generate a patch
         $ pyment -w myfile.py  # will overwrite the file
 
 or
 
 .. code-block:: sh
 
-        $ pyment  my/folder/
+        $ pyment my/folder/ # patches are generated at root
+        $ pyment -w my/folder/ # files are overwritten in place
 
 - get help:
 
@@ -135,26 +150,16 @@ Let's consider a file *test.py* with following content:
 
 .. code-block:: python
 
-        def func(param1=True, param2: str = 'default val'):
-            '''Description of func with docstring groups style.
+        def addnum_rest(a: int, b: int = 0) -> int:
+            """add numbers
 
-            Params:
-                param1 - descr of param1 that has True for default value.
-                param2 - descr of param2
-
-            Returns:
-                some value
-
-            Raises:
-                keyError: raises key exception
-                TypeError: raises type exception
-
-            '''
-            pass
-
-        class A:
-            def method(self, param1, param2=None) -> int:
-                pass
+            :param a: First number.
+            :type a: int
+            :param b: Second number. Defaults = 0.
+            :type b: int
+            :returns: The output sum
+            """
+            return a + b
 
 Now let's use Pyment:
 
@@ -162,7 +167,7 @@ Now let's use Pyment:
 
         $ pyment test.py
 
-Using Pyment without any argument will autodetect the docstrings formats and generate a patch using the reStructured Text format.
+Using Pyment without any argument will autodetect the docstrings formats and generate a patch using the NumpyDoc format.
 So the previous command has generated the file *test.py.patch* with following content:
 
 .. code-block:: patch
@@ -171,45 +176,29 @@ So the previous command has generated the file *test.py.patch* with following co
 
         --- a/test.py
         +++ b/test.py
-        @@ -1,20 +1,22 @@
-         def func(param1=True, param2: str = 'default val'):
-        -    '''Description of func with docstring groups style.
-        -
-        -    Params:
-        -        param1 - descr of param1 that has True for default value.
-        -        param2 - descr of param2
-        -
-        -    Returns:
-        -        some value
-        -
-        -    Raises:
-        -        keyError: raises key exception
-        -        TypeError: raises type exception
-        -
-        -    '''
-        +    """Description of func with docstring groups style.
+        @@ -1,10 +1,16 @@
+         def addnum_rest(a: int, b: int = 0) -> int:
+        -    """add numbers
+        +    """Add numbers.
+
+        -    :param a: First number.
+        -    :type a: int
+        -    :param b: Second number. Defaults = 0.
+        -    :type b: int
+        -    :returns: The output sum
+        +    Parameters
+        +    ----------
+        +    a : int
+        +        First number.
+        +    b : int, optional
+        +        Second number. By default, 0.
         +
-        +    :param param1: descr of param1 that has True for default value
-        +    :param param2: descr of param2 (Default value = 'default val')
-        +    :type param2: str
-        +    :returns: some value
-        +    :raises keyError: raises key exception
-        +    :raises TypeError: raises type exception
-        +
-        +    """
-             pass
-         
-         class A:
-        +    """ """
-             def method(self, param1, param2=None) -> int:
-        +        """
-        +
-        +        :param param1: 
-        +        :param param2:  (Default value = None)
-        +        :rtype: int
-        +
-        +        """
-                 pass
+        +    Returns
+        +    -------
+        +    int
+        +        The output sum.
+            """
+            return a + b
 
 Let's finally apply the patch with the following command:
 
@@ -221,39 +210,23 @@ Now the original *test.py* was updated and its content is now:
 
 .. code-block:: python
 
-        def func(param1=True, param2: str = 'default val'):
-            """Description of func with docstring groups style.
+        def addnum_rest(a: int, b: int = 0) -> int:
+            """Add numbers.
 
-            :param param1: descr of param1 that has True for default value
-            :param param2: descr of param2 (Default value = 'default val')
-            :type param2: str
-            :returns: some value
-            :raises keyError: raises key exception
-            :raises TypeError: raises type exception
+            Parameters
+            ----------
+            a : int
+                First number.
+            b : int, optional
+                Second number. By default, 0.
 
+            Returns
+            -------
+            int
+                The output sum.
             """
-            pass
-
-        class A:
-            """ """
-            def method(self, param1, param2=None) -> int:
-                """
-
-                :param param1: 
-                :param param2:  (Default value = None)
-                :rtype: int
-
-                """
-                pass
-
-Also refer to the files `example.py.patch <https://github.com/dadadel/pyment/blob/master/example_javadoc.py.patch>`_ or `example_numpy.py.patch <https://github.com/dadadel/pyment/blob/master/example_numpydoc.py.patch>`_ to see some other results that can be obtained processing the file `example.py <https://github.com/dadadel/pyment/blob/master/example.py>`_
+            return a + b
 
 
-Offer a coffee or a beer
-------------------------
-
-If you enjoyed this free software, and want to thank me, you can offer me some
-bitcoins for a coffee, a beer, or more, I would be happy :)
-
-Here's my address for bitcoins : 1Kz5bu4HuRtwbjzopN6xWSVsmtTDK6Kb89
-
+For a more complete example using nympydoc or googledoc, see `output_numpy.py <output_numpy.py>`_
+and `output_google.py <output_google.py>`_ from `example.py <example.py>`_.
