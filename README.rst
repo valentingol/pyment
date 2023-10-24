@@ -4,14 +4,17 @@ pyment
 Create, update or convert docstrings in existing Python files, managing several styles.
 
 **Discalimer**: This is a non-official fork of the original project. Main changes are:
+
 - Output style by default is numpydoc instead of reST
-- The empty sections in original docstring (including parameters) are ignored by default
-  To enable them, use `-e` flag (note that the behavior of this flag in the original
-  project is the opposite)
+
+- The empty sections in original docstring (including parameters) are ignored by default. To enable them, use `-e` flag (note that the behavior of this flag in the original project is the opposite)
+
 - Most sentences are now ended with a dot and start with a capital letter
-- Default arguments are automatically specified in the docstring using the `By default, `
-  syntax and `, optional` is added next to the type of optional arguments.
+
+- Default arguments are automatically specified in the docstring using the `By default, ` syntax and `, optional` is added next to the type of optional arguments.
+
 - Indentation of indented doctests lines are preserved.
+
 - More sections titles are supported (like Note, Example, ...)
 
 See `output_numpy.py <output_numpy.py>`_ and `output_google.py <output_google.py>`_
