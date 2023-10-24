@@ -12,7 +12,7 @@ Create, update or convert docstrings in existing Python files, managing several 
 - Default arguments are automatically specified in the docstring using the `By default, `
   syntax and `, optional` is added next to the type of optional arguments.
 - Indentation of indented doctests lines are preserved.
-- More sections title are supported (like Note, Example, ...)
+- More sections titles are supported (like Note, Example, ...)
 
 See `output_numpy.py <output_numpy.py>`_ and `output_google.py <output_google.py>`_
 for an example of the results from `example.py <example.py>`_.

@@ -368,7 +368,7 @@ class NumpydocTools(DocToolsBase):
                     break
                 else:
                     start = -1
-            if isin_alone(self.opt.values(), line):
+            if isin_alone(self.opt.values(), line) or isin_alone(self.opt.keys(), line):
                 start = i
         return start
 
@@ -431,6 +431,7 @@ class NumpydocTools(DocToolsBase):
         """
         keys = ["also", "ref", "note", "other", "example", "method", "attr"]
         elems = [self.opt[k] for k in self.opt if k in keys]
+        elems.extend(keys)
         data = data.splitlines()
         start = 0
         init = 0
@@ -453,7 +454,7 @@ class NumpydocTools(DocToolsBase):
                         section = [
                             d.replace(spaces, "", 1).rstrip() for d in data[init:]
                         ]
-                    raw += "\n".join(section) + "\n"
+                    raw += "\n" + "\n".join(section) + "\n"
                 init += 2
         return raw
 
@@ -791,12 +792,17 @@ class DocsTools(object):
         """
         start, end = -1, -1
         datalst = data.splitlines()
+        spaces = ""
+        for line in datalst:
+            if line.startswith("  "):
+                spaces = get_leading_spaces(line)
+
         for i, line in enumerate(datalst):
             if start > -1:
                 if line.strip() == "":
                     break
                 end = i
-            elif line.strip().startswith(">>>"):
+            elif line.startswith(spaces + ">>>"):
                 start = i
                 end = i
         return start, end
@@ -2039,7 +2045,7 @@ class DocString(object):
         """Sets the global description if any"""
         # TODO: manage different in/out styles
         if self.docs["in"]["desc"]:
-            self.docs["out"]["desc"] = self.docs["in"]["desc"]
+            self.docs["out"]["desc"] = self.docs["in"]["desc"].strip()
         else:
             self.docs["out"]["desc"] = ""
 
@@ -2060,6 +2066,8 @@ class DocString(object):
             }
             for name, desc, param_type in self.docs["in"]["params"]
         }
+        if docs_params == {}:
+            return
         for name in sig_params:
             # WARNING: Note that if a param in docstring isn't in the signature params, it will be dropped
             sig_type, sig_default = (
@@ -2308,7 +2316,12 @@ class DocString(object):
                 desc = desc.replace("(By default,", "By default,")
                 desc = desc[:-1]
         if "default" not in part[1].lower() and len(part) > 3 and part[3] is not None:
-            desc += " By default, " + str(part[3]) + "."
+            if len(desc) > 0:
+                if desc[-1] != ".":
+                    desc += ". "
+                else:
+                    desc += " "
+            desc += "By default, " + str(part[3]) + "."
         return desc
 
     def _set_raw_raise(self, sep):
@@ -2427,7 +2440,7 @@ class DocString(object):
             if self.docs["out"]["rtype"]:
                 rtype = self.docs["out"]["rtype"]
             else:
-                rtype = "type"
+                rtype = "[type]"
             # case of several returns
             if type(self.docs["out"]["return"]) is list:
                 for ret_elem in self.docs["out"]["return"]:
@@ -2561,6 +2574,16 @@ class DocString(object):
         # sets the description section
         raw = self.docs["out"]["spaces"] + self.before_lim + self.quotes
         desc = self.docs["out"]["desc"].strip()
+        if len(desc) > 0:
+            lines = desc.split("\n")
+            for i, line in enumerate(lines):
+                if len(line) > 0:
+                    if line[-1] not in (" ", ".", ",", ":", ";", "!", "?"):
+                        line += "."
+                    if 97 <= ord(line[0]) <= 122:
+                        line = line[0].upper() + line[1:]
+                    lines[i] = line
+            desc = "\n".join(lines)
         if not desc or not desc.count("\n"):
             if (
                 not self.docs["out"]["params"]
@@ -2569,12 +2592,13 @@ class DocString(object):
                 and not self.docs["out"]["raises"]
             ):
                 raw += desc if desc else self.trailing_space
+                raw = raw.rstrip()
                 raw += self.quotes
                 self.docs["out"]["raw"] = raw.rstrip()
                 return
         if not self.first_line:
             raw += "\n" + self.docs["out"]["spaces"]
-        raw += with_space(self.docs["out"]["desc"]).strip() + "\n"
+        raw += with_space(desc).strip() + "\n"
 
         # sets the parameters section
         raw += self._set_raw_params(sep)
@@ -2587,7 +2611,8 @@ class DocString(object):
         # sets post specific if any
         if "post" in self.docs["out"]:
             raw += (
-                self.docs["out"]["spaces"]
+                "\n"
+                + self.docs["out"]["spaces"]
                 + with_space(self.docs["out"]["post"]).strip()
                 + "\n"
             )
@@ -2602,12 +2627,31 @@ class DocString(object):
 
         while raw[-1] in (" ", "\n"):
             raw = raw[:-1]
-        raw += "\n"
 
         if raw.count(self.quotes) == 1:
-            raw += self.docs["out"]["spaces"] + self.quotes
+            if len(raw.split("\n")) > 1:
+                raw += "\n" + self.docs["out"]["spaces"]
+            raw += self.quotes
 
-        self.docs["out"]["raw"] = raw.rstrip()
+        raw = raw.rstrip()
+        self.docs["out"]["raw"] = self.postprocess(raw)
+
+    def postprocess(self, raw):
+        """Postprocess docstring."""
+        lines = raw.splitlines()
+        for i, line in enumerate(lines):
+            lines[i] = line.rstrip()
+        if len(lines) > 1:
+            idx_to_remove = []
+            for i in range(len(lines) - 1):
+                if lines[i + 1] == lines[i] == "":
+                    idx_to_remove.append(i + 1)
+            for i in idx_to_remove[::-1]:
+                del lines[i]
+        if len(lines) > 2 and lines[-2] == "":
+            del lines[-2]
+        raw = "\n".join(lines)
+        return raw
 
     def generate_docs(self):
         """Generates the output docstring"""
